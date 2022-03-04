@@ -1,0 +1,152 @@
+jdbcTemplage 란
+jdbc + Templage = jdbc를 위한 툴.
+
+jdbc 실행순서
+1. 드라이버 등록
+2. db연결
+3. sql 실행
+4. 결과 리턴
+5. 종료
+
+DriverManager
+- Connection 인스턴스를 얻게 해주는 역할
+- Class.forName() 메서드를 통해 드라이버 로딩.
+- getConnection() 메서드를 이용해 Connection생성
+
+Connection
+- Statement 객체를 얻게 해주는 역할
+
+Statement
+- ResultSet 을 얻게 해주는 역할, 쿼리문 사용하기 위해 필요한 객체
+- createStatement() 메서드를 통해 호출
+
+PreparedStatement
+- preparedStatement() 메서드를 통해 호출
+
+ResultSet
+- 쿼리 수행후 결과를 담는 역할
+
+위의 1~5 과정을 dao 에서 매번 실행하기는 번거롭다.
+따라서 jdbcTemplage에 위의 내용을 담아서 사용한다.
+
+기존 DAO
+
+ex)
+public void createDB() {
+		String url = "jdbc:mysql://localhost/";
+		try {
+			Class.forName(driver);
+			con = DriverManager.getConnection(url,id,pwd);
+			stmt = con.createStatement();
+			String createDB = "CREATE DATABASE classdb";
+			stmt.executeUpdate(createDB);
+			
+			
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			
+			try {
+				stmt.close();
+				con.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+===================================================
+jdbcTemplage
+
+public class JDBCTemplate{
+    public static Connection getConnection(){
+        try{
+            Class.forName(driver);
+        }catch(ClassNotFoundException e){
+            e.printStackTrace();
+        }
+        String url = "";
+        String id = "";
+        String pw = "";
+
+        Connection con = null;
+
+        try{
+            con = DriverManager.getConnection(url, id, pw);
+
+            con.setAutoCommit(false);
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+
+        return con;
+    }
+
+    public static boolean isConnection(Connection con){
+        boolean valid = true;
+
+        try{
+            if(con == null || con.isClosed()){
+                valid = false;
+            }
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        return valid;
+    }
+
+    public static void close(Connection con){
+        if(isConnection(con)){
+            try{
+                con.close();
+            }catch(SQLException e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void close(Statement stmt){
+        if(stmt != null){
+            try{
+                stmt.close();
+            }catch(SQLException e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void close(ResultSet rs){
+        if(rs != null){
+            try{
+                rs.close();
+            }catch(SQLException e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void commit(Connection con){
+        if(isConnection(con)){
+            try{
+                con.commit();
+            }catch(SQLException e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void rollback(Connection con){
+        if(isConnection(con)){
+            try{
+                con.rollback();
+            }catch(SQLException e){
+                e.printStackTrace();
+            }
+        }
+    }
+}
+
+위와같이 정의해두고 DAO에서 import 하여 사용한다.
